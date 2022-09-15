@@ -22,7 +22,6 @@ class App extends Component {
 
   render() {
     let navbarComponent = !this.state.isFullPageLayout ? <NavBar /> : '';
-    // let sidebarComponent = !this.state.isFullPageLayout ? <Sidebar /> : '';
     return (
       <>
         <FullScreen
@@ -30,9 +29,6 @@ class App extends Component {
           onChange={isFull => this.setState({ isFull })}
         >
           <Container className="app-wrapper p-0 m-0" fluid>
-
-            {/* {sidebarComponent} */}
-
             <div className="main-panel">
               {navbarComponent}
               <AppRoutes />
