@@ -1,0 +1,18 @@
+/* .navbar-light .navbar-toggler {
+    color: rgb(255 255 255 / 55%);
+    border-color: rgb(255 255 255 / 10%);
+} */
+
+.nav-modal-btn {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1d3356 !important;
+}
+.nav-pills .nav-link.active {
+  color: #fff !important;
+  background-color: #2196F3;
+  border-radius: 0px;
+}
+.nav-pills .nav-link:focus, .nav-link:hover{
+  border-radius: 0px;
+}

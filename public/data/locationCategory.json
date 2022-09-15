@@ -1,0 +1,30 @@
+{
+    "metaData": {
+        "page": 1,
+        "pageSize": 10,
+        "totalCount": 3
+    },
+    "data": [
+        {
+            "id": "10000001",
+            "categoryName": "Basic",
+            "categoryFare": 2,
+            "categorySpecialFare": 5,
+            "status": "ACTIVE"
+        },
+        {
+            "id": "10000002",
+            "categoryName": "Medium",
+            "categoryFare": 3,
+            "categorySpecialFare": 7,
+            "status": "ACTIVE"
+        },
+        {
+            "id": "10000003",
+            "categoryName": "Advance",
+            "categoryFare": 4,
+            "categorySpecialFare": 9,
+            "status": "ACTIVE"
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+.field-kyc-image{
+    display: block;
+    position: relative;
+  }
+  .field-kyc-label{
+    top:0;
+    font-size: 12px;
+    margin-top: -20px;
+    position: absolute;
+    left: 0.75rem;
+  }

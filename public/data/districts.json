@@ -1,0 +1,24 @@
+{
+    "metaData": {
+        "page": 1,
+        "pageSize": 10,
+        "totalCount": 1
+    },
+    "data": [
+        {
+            "id": "10000001",
+            "districtName": "Moga",
+            "status": "ACTIVE"
+        },
+        {
+            "id": "10000002",
+            "districtName": "Ludhiana",
+            "status": "INACTIVE"
+        },
+        {
+            "id": "10000003",
+            "districtName": "Patiala",
+            "status": "INACTIVE"
+        }
+    ]
+}

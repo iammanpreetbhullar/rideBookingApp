@@ -1,0 +1,129 @@
+{
+    "metaData": {
+        "page": 1,
+        "pageSize": 10,
+        "totalCount": 25
+    },
+    "data": [
+        {
+            "id": "10000001",
+            "locationType": "DEFAULT",
+            "locationName": "Sanjeev And Company",
+            "locationLat": "30.8380945",
+            "locationLong": "75.1581094",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000001",
+            "locationCategoryId": "10000001"
+        },
+        {
+            "id": "10000002",
+            "locationType": "DEFAULT",
+            "locationName": "Chokha empire",
+            "locationLat": "30.8194145",
+            "locationLong": "75.2180675",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000001",
+            "locationCategoryId": "10000002"
+        },
+        {
+            "id": "10000003",
+            "locationType": "DEFAULT",
+            "locationName": "Baldev da Dhaba Moga",
+            "locationLat": "30.8210888",
+            "locationLong": "75.1942163",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000001",
+            "locationCategoryId": "10000001"
+        },
+        {
+            "id": "10000004",
+            "locationType": "DEFAULT",
+            "locationName": "Hotel Taj",
+            "locationLat": "30.8203185",
+            "locationLong": "75.2182516",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000001",
+            "locationCategoryId": "10000002"
+        },
+        {
+            "id": "10000005",
+            "locationType": "DEFAULT",
+            "locationName": "Orbit Multiplex Moga",
+            "locationLat": "30.833567",
+            "locationLong": "75.157535",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000001",
+            "locationCategoryId": "10000003"
+        },
+        {
+            "id": "10000006",
+            "locationType": "DEFAULT",
+            "locationName": "Sonalika Tractors Dealership",
+            "locationLat": "30.8396805",
+            "locationLong": "75.2070925",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000001",
+            "locationCategoryId": "10000003"
+        },
+        {
+            "id": "10000007",
+            "locationType": "DEFAULT",
+            "locationName": "Gold Coast Club",
+            "locationLat": "30.8199386",
+            "locationLong": "75.2229918",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000001",
+            "locationCategoryId": "10000002"
+        },
+        {
+            "id": "10000008",
+            "locationType": "DEFAULT",
+            "locationName": "CITY PARK",
+            "locationLat": "30.8109396",
+            "locationLong": "75.1854427",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000002",
+            "locationCategoryId": "10000003"
+        },
+        {
+            "id": "10000009",
+            "locationType": "DEFAULT\n",
+            "locationName": "Punjab ITI Moga",
+            "locationLat": "30.8177964",
+            "locationLong": "75.2004494",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000003",
+            "locationCategoryId": "10000002"
+        },
+        {
+            "id": "10000010",
+            "locationType": "DEFAULT",
+            "locationName": "Chungi 3",
+            "locationLat": "30.8004405",
+            "locationLong": "75.1594875",
+            "status": "ACTIVE",
+            "createdAt": "2022-07-24T18:30:00.000Z",
+            "updatedAt": "2022-07-24T18:30:00.000Z",
+            "districtId": "10000002",
+            "locationCategoryId": "10000002"
+        }
+    ]
+}
