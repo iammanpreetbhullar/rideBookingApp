@@ -7,6 +7,7 @@ import { getAllUsers } from "../../actions/getUsers";
 import { Badge } from "primereact/badge";
 import { createSession, invalidateSession } from '../../config/appSession';
 import { driverLogin, driverLogout } from '../../actions/authentication';
+import loader from '../../assets/loaders/rickshawLoading.gif'
 
 class DriversList extends Component {
     constructor(props) {
@@ -16,6 +17,7 @@ class DriversList extends Component {
             loading: true,
             globalFilterValue: '',
             timer: 0,
+            loaderShow: false
 
         };
         this.columns = [
@@ -23,11 +25,12 @@ class DriversList extends Component {
             { field: "lastName", header: "Last Name", style: { width: '15%' }, sortable: true },
             { field: "mobileNumber", header: "Mobile Number", style: { width: '8%' } },
             { field: "kycStatus", header: "KYC Status", body: this.customBodyTemplate, style: { width: '6%' }, sortable: true },
-            { header: "Actions", body: this.customBodyTemplate, style: { width: '3%' }, sortable: true }
+            { header: "Actions", body: this.customBodyTemplate, style: { width: '3%' }, bodyStyle: { textAlign: 'center' }, sortable: true }
         ];
     }
 
     componentDidMount() {
+        this.setState({ loaderShow: true })
         this.initFilters();
     }
 
@@ -40,7 +43,7 @@ class DriversList extends Component {
         if (filters != "") {
             this.props.getAllUsers(filters).then(() => {
                 if (this.props.users !== undefined) {
-                    this.setState({ loading: false });
+                    this.setState({ loading: false, loaderShow: false });
                 }
             });
         } else {
@@ -48,7 +51,7 @@ class DriversList extends Component {
             driverFilter.filtering.userType = "DRIVER"
             this.props.getAllUsers(driverFilter).then(() => {
                 if (this.props.users !== undefined) {
-                    this.setState({ loading: false });
+                    this.setState({ loading: false, loaderShow: false });
                 }
             });
         }
@@ -86,7 +89,7 @@ class DriversList extends Component {
             }
         }
     }
-    
+
     initSession = (args) => {
         const { authenticated, driverDetails } = this.props;
         if (authenticated) {
@@ -134,24 +137,31 @@ class DriversList extends Component {
     render() {
         const { rows, loading } = this.state;
         return (
-            <div>
-                <DataGrid
-                    columns={this.columns}
-                    value={this.props.users.data}
-                    stripedRows={true}
-                    size="small"
-                    responsiveLayout="scroll"
-                    paginator={true}
-                    showGridlines={true}
-                    rows={rows}
-                    dataKey="id"
-                    filtering={true}
-                    loading={loading}
-                    globalFilterFields={['firstName', 'lastName', 'mobileNumber', 'city']}
-                    header={this.renderHeader}
-                    emptyMessage="No records found."
-                />
-            </div>
+            <>
+                {this.state.loaderShow ?
+                    <div className='bg-transparent w-100 d-flex justify-content-center align-items-center' style={{ height: '93.5%' }}>
+                        <img src={loader} width='20%' />
+                    </div> :
+                    <div>
+                        <DataGrid
+                            columns={this.columns}
+                            value={this.props.users.data}
+                            stripedRows={true}
+                            size="small"
+                            responsiveLayout="scroll"
+                            paginator={true}
+                            showGridlines={true}
+                            rows={rows}
+                            dataKey="id"
+                            filtering={true}
+                            loading={loading}
+                            globalFilterFields={['firstName', 'lastName', 'mobileNumber', 'city']}
+                            header={this.renderHeader}
+                            emptyMessage="No records found."
+                        />
+                    </div>
+                }
+            </>
         );
     }
 }

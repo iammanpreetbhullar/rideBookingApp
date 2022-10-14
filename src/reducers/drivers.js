@@ -1,5 +1,5 @@
 import baseState from '../store/baseState';
-import { GET_RECENT_RIDES, GET_PAST_RIDES, ACCEPT_RIDE, CANCEL_RIDE } from '../actions/action';
+import { GET_RECENT_RIDES, GET_PAST_RIDES, ACCEPT_RIDE, CANCEL_RIDE, START_RIDE, COMPLETE_RIDE } from '../actions/action';
 export default (state = baseState.rideDetails, { payload, type, error }) => {
     switch (type) {
         case GET_RECENT_RIDES.REQUEST:
@@ -45,6 +45,36 @@ export default (state = baseState.rideDetails, { payload, type, error }) => {
             return {
                 ...state,
                 acceptedRide: {},
+                error: error.message
+            };
+        case START_RIDE.REQUEST:
+            return {
+                ...state
+            };
+        case START_RIDE.SUCCESS:
+            return {
+                ...state,
+                startedRide: payload.data
+            };
+        case START_RIDE.FAILURE:
+            return {
+                ...state,
+                startedRide: {},
+                error: error.message
+            };
+        case COMPLETE_RIDE.REQUEST:
+            return {
+                ...state
+            };
+        case COMPLETE_RIDE.SUCCESS:
+            return {
+                ...state,
+                completedRide: payload.data
+            };
+        case COMPLETE_RIDE.FAILURE:
+            return {
+                ...state,
+                completedRide: {},
                 error: error.message
             };
         case CANCEL_RIDE.REQUEST:

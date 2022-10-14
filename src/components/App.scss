@@ -2916,12 +2916,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 
 //map 
-#select_div {
-  padding: 10px;
-  display: flex;
-  justify-content: center;
+// #select_div {
+//   padding: 10px;
+//   display: flex;
+//   justify-content: center;
 
-}
+// }
 
 .tab {
   flex-grow: 1;
@@ -4308,4 +4308,9 @@ p.card-text {
 
 .selectBtn-sm {
   height: 44px;
+}
+
+.p-button.p-button-sm {
+  font-size: 0.875rem !important;
+  padding: 0.4rem 0.45rem !important;
 }

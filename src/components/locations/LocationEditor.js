@@ -30,13 +30,14 @@ class LocationEditor extends Component {
 
     addLocation = (data) => {
         this.props.addLocationDistrictWise(data).then(() => {
-            this.setState({ userInput: {} })
+            this.setState({ userInput: {}, locStatus: "", locationCategory: null, district: null, locationName: "", locationLat: "", locationLong: "" })
         })
     }
 
     updateLoc = (data) => {
         this.props.updateLocation(data).then(() => {
             console.log("updated")
+            this.closeModal();
         })
     }
 
@@ -127,7 +128,7 @@ class LocationEditor extends Component {
     }
 
     closeModal = () => {
-        this.setState({ district: null, locationCategory: null,  header: "" })
+        this.setState({ district: null, locationCategory: null, header: "" })
         this.props.closeModal();
     }
 

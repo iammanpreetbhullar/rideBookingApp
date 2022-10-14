@@ -2,10 +2,10 @@ import React, { Component, Suspense, lazy } from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 import Spinner from "./common/Spinner";
 
-const Home = lazy(() => import("./home/Home"));
+const Home = lazy(() => import("./dashboard/Dashboard"));
 const Login = lazy(() => import("./user/Login"));
 const RoutesMap = lazy(() => import("./routesMap/RoutesMap"));
-const VehicleLocMap = lazy(() => import("./vehicleLocationMap/VehicleLocMap"));
+const VehicleLocMap = lazy(() => import("./vehicle/VehicleLocMap"));
 const Users = lazy(() => import("./persons/PersonsList"));
 const Districts = lazy(() => import("./districts/Districts"));
 const Locations = lazy(() => import("./locations/Locations"));

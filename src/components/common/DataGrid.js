@@ -24,6 +24,7 @@ class DataGrid extends React.Component {
                     bodyStyle={col.bodyStyle ? col.bodyStyle : null}
                     headerStyle={col.headerStyle ? col.headerStyle : null}
                     sortable={col.sortable ? col.sortable : null}
+                    alignHeader={col.alignHeader ? col.alignHeader : null}
                 />
             );
         }) : null;

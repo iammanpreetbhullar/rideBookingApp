@@ -22,6 +22,7 @@ class App extends Component {
 
   render() {
     let navbarComponent = !this.state.isFullPageLayout ? <NavBar /> : '';
+    // let sidebarComponent = !this.state.isFullPageLayout ? <Sidebar /> : '';
     return (
       <>
         <FullScreen
@@ -29,6 +30,9 @@ class App extends Component {
           onChange={isFull => this.setState({ isFull })}
         >
           <Container className="app-wrapper p-0 m-0" fluid>
+
+            {/* {sidebarComponent} */}
+
             <div className="main-panel">
               {navbarComponent}
               <AppRoutes />
@@ -63,17 +67,36 @@ class App extends Component {
         document.querySelector('.app-wrapper').classList.add('full-app-wrapper');
         break;
       } else {
-        if ((this.props.location.pathname).toString().includes('/drivers/')) {
-          this.setState({
-            isFullPageLayout: true
-          })
-        } else {
-          this.setState({
-            isFullPageLayout: false
-          })
-          document.querySelector('.app-wrapper').classList.remove('full-app-wrapper');
-        }
+        this.setState({
+          isFullPageLayout: false
+        })
+        document.querySelector('.app-wrapper').classList.remove('full-app-wrapper');
+
       }
+    }
+
+    if (this.props.location.pathname === '/home') {
+      setTimeout(() => {
+        document.getElementById('/home').classList.replace('bg-light-blue', 'bg-light-green')
+      }, 300);
+    }
+    else if (this.props.location.pathname === '/map/routes') {
+      document.getElementById('/map/routes').classList.replace('bg-light-blue', 'bg-light-green')
+    }
+    else if (this.props.location.pathname === '/map/locations') {
+      document.getElementById('/map/locations').classList.replace('bg-light-blue', 'bg-light-green')
+    }
+    else if (this.props.location.pathname === '/users') {
+      document.getElementById('/users').classList.replace('bg-light-blue', 'bg-light-green')
+    }
+    else if (this.props.location.pathname === '/districts') {
+      document.getElementById('/districts').classList.replace('bg-light-blue', 'bg-light-green')
+    }
+    else if (this.props.location.pathname === '/locations') {
+      document.getElementById('/locations').classList.replace('bg-light-blue', 'bg-light-green')
+    }
+    else if (this.props.location.pathname === '/kyc-requests-list') {
+      document.getElementById('/kyc-requests-list').classList.replace('bg-light-blue', 'bg-light-green')
     }
   }
 }

@@ -7,7 +7,7 @@ import updateVehicleLocs from './postVehicleLocs';
 import getAllUsers from './getUsers';
 import getDistricts from './getDistricts';
 import locationDetails from './locationDetails'
-import userDetails from './getUser';
+import userDetails from './user';
 import getLedger from './getLedgerDetail';
 import brandDetails from './brands';
 import vehicle from './vehicle';

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { createAction, GET_RECENT_RIDES, GET_PAST_RIDES, ACCEPT_RIDE, CANCEL_RIDE } from './action';
+import { createAction, GET_RECENT_RIDES, GET_PAST_RIDES, ACCEPT_RIDE, CANCEL_RIDE, START_RIDE, COMPLETE_RIDE } from './action';
 
 import { BASE_URL } from '../config/api';
 import { HEADERS } from '../config/appHeaders';
@@ -12,6 +12,7 @@ export const getRecentRidesData = (data) => {
         data
     });
 }
+
 export const getPastRidesData = (data) => {
     return createAction({
         type: GET_PAST_RIDES,
@@ -19,6 +20,7 @@ export const getPastRidesData = (data) => {
         data
     });
 }
+
 export const acceptRide = (data) => {
     return createAction({
         type: ACCEPT_RIDE,
@@ -26,10 +28,27 @@ export const acceptRide = (data) => {
         data
     });
 }
+
 export const cancelRide = (data) => {
     return createAction({
         type: CANCEL_RIDE,
         action: () => axios.put(BASE_URL + 'mobile/driver/ride/' + data.id + '/cancel', data, { headers: HEADERS.AUTHENTIC() }),
+        data
+    });
+}
+
+export const startRide = (data) => {
+    return createAction({
+        type: START_RIDE,
+        action: () => axios.put(BASE_URL + 'mobile/driver/ride/' + data.id + '/start', data, { headers: HEADERS.AUTHENTIC() }),
+        data
+    });
+}
+
+export const completeRide = (data) => {
+    return createAction({
+        type: COMPLETE_RIDE,
+        action: () => axios.put(BASE_URL + 'mobile/driver/ride/' + data.id + '/complete', data, { headers: HEADERS.AUTHENTIC() }),
         data
     });
 }

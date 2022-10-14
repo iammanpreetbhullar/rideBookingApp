@@ -12,25 +12,28 @@ import { Dialog } from 'primereact/dialog';
 import { connect } from 'react-redux';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { Calendar } from 'primereact/calendar';
-import { getAllKYCRequests, getUserKYCRequest } from '../../actions/kyc';
+import { getAllKYCRequests, getUserKYCRequest, updateUserKYC } from '../../actions/kyc';
 import { Checkbox } from 'primereact/checkbox';
 import './KycRequestsList.css';
 import img from "../../assets/images/1001Id.jpg";
+import DataGrid from '../common/DataGrid';
+import loader from '../../assets/loaders/rickshawLoading.gif';
+import '../App.scss'
 
 class KycRequestsList extends React.Component {
     constructor() {
         super();
         this.state = {
-            kycStatus: [],
+            allKYCData: [],
             globalFilterValue: "",
             loading: true,
             position: false,
             displayPosition: false,
             displayResponsive: false,
-            kycEachStatus: {},
+            kycData: {},
             statusOptions: [{ name: 'APPROVED', value: 'APPROVED' }, { name: 'PENDING', value: 'PENDING' }, { name: 'REJECTED', value: 'REJECTED' }],
             confirmDialog: false,
-            active: true,
+            idDatePickerHidden: true,
             displayRejectPopUp: false,
             userInput: {},
             dateFilters: [{ name: "Today" }, { name: "Yesterday" }, { name: "Custom" }],
@@ -39,123 +42,134 @@ class KycRequestsList extends React.Component {
             disableStatusFilter: true,
             disableDateFilter: true,
             timer: null,
-            btnDelete: false
+            dialog: '',
+            loaderShow: false
         };
+        this.columns = [
+            { field: "person.firstName", header: "First Name", style: { width: '30%' } },
+            { field: 'person.lastName', header: 'Last Name', style: { width: '30%' } },
+            { field: 'updateDate', header: 'Req Date', body: this.customBodyTemplate, style: { width: '20%' } },
+            { field: 'status', header: 'Status', body: this.customBodyTemplate, bodyStyle: { textAlign: 'center' }, style: { width: '10%' } },
+            { field: 'actions', header: 'Actions', body: this.customBodyTemplate, bodyStyle: { textAlign: 'center' }, style: { width: '10%' } }
+        ];
     }
 
     componentDidMount() {
-        this.fetchRequests({});
+        this.setState({ loaderShow: true })
+        this.fetchAllKYCRequests("");
     }
 
     componentDidUpdate(prevState) {
         if (this.props.userKYCRequest !== prevState.userKYCRequest) {
-            this.setState({ kycEachStatus: this.props.userKYCRequest })
+            this.setState({ kycData: this.props.userKYCRequest })
         }
     }
 
-    fetchRequests = (data) => {
-        this.props.getAllKYCRequests(data).then(() => {
-            this.setState({ loading: false })
-            this.setState({ kycStatus: this.props.allKycRequests })
-        })
-    }
-
-    statusFormat = (rowData, col) => {
-        if (col.field === "status") {
-            if (rowData.status === "APPROVED") {
-                return (<>
-                    <Badge value={rowData.status} severity="success" />
-                </>)
-            } else if (rowData.status === "PENDING") {
-                return (<>
-                    <Badge value={rowData.status} severity="danger" />
-                </>)
-            } else if (rowData.status === "REJECTED") {
-                return (<>
-                    <Badge value={rowData.status} severity="danger" />
-                </>)
-            }
+    fetchAllKYCRequests = (data) => {
+        if (data !== "") {
+            this.props.getAllKYCRequests(data).then(() => {
+                this.setState({ loading: false, allKYCData: this.props.allKycRequests, loaderShow: false })
+            })
+        } else {
+            this.props.getAllKYCRequests().then(() => {
+                this.setState({ loading: false, allKYCData: this.props.allKycRequests, loaderShow: false })
+            })
         }
     }
 
-    actionTemplate = (rowData, col) => {
-        return (<div className="col-md-12">
-            <Button className="p-button-secondary p-button-sm" disabled={rowData.status === "APPROVED" ? true : false} icon="pi pi-pencil" onClick={() => this.handleActionClick(rowData, 'displayResponsive')} />
-            <Button className="p-button-primary p-button-sm ms-2" icon="pi pi-trash" onClick={() => this.deleteEachRow(rowData, col)} />
-        </div>)
-
-    };
-
-    deleteEachRow = (rowData) => {
-        this.handleActionClick(rowData)
-        this.setState({ btnDelete: true, confirmDialog: true })
+    updateKYCStatus = (args) => {
+        if (args.action === 'approve') {
+            this.props.updateUserKYC(args).then(() => {
+                this.onHide('displayResponsive')
+            }).then(() => {
+                this.fetchAllKYCRequests("");
+            });
+        } else {
+            this.props.updateUserKYC(args).then(() => {
+                this.onHide('displayRejectPopUp')
+            }).then(() => {
+                this.fetchAllKYCRequests("");
+            });
+        }
     }
+
+    customBodyTemplate = (rowData, col) => (
+        col.field === 'updateDate' ? <span>{new Date(rowData.updateDate).toLocaleDateString()}</span> :
+            col.field === 'status' ? rowData.status === 'APPROVED' ? <Badge value={rowData.status} severity="success" /> :
+                rowData.status === 'PENDING' ? <Badge value={rowData.status} severity="warning" /> :
+                    <Badge value={rowData.status} severity="danger" /> :
+                <div className="col-md-12">
+                    <Button className="p-button-rounded p-button-info p-button-sm" disabled={rowData.status === "APPROVED" ? true : false} onClick={() => this.handleActionClick(rowData, 'displayResponsive')} >
+                        <i className="pi pi-pencil" style={{ fontSize: "1em" }}></i>
+                    </Button>
+                </div>
+    )
 
     handleChange = (e) => {
         const { userInput, dateCriteria } = this.state;
         const { name, value } = e.target;
         if (value.name === "Custom" || name === 'startDate' || name === 'endDate') {
-            this.setState({ active: false })
+            this.setState({ idDatePickerHidden: false })
             let dateElement = document.getElementById('dateFields');
             dateElement.classList.add('d-flex')
         }
         else {
-            this.setState({ active: true })
+            this.setState({ idDatePickerHidden: true })
         }
         name === "startDate" ?
             this.setState({ userInput: { ...userInput, [name]: this.formatDatePart(value.getFullYear()) + "-" + this.formatDatePart(value.getMonth() + 1) + "-" + this.formatDatePart(value.getDate()) } })
             : name === "endDate" ?
                 this.setState({ userInput: { ...userInput, [name]: this.formatDatePart(value.getFullYear()) + "-" + this.formatDatePart(value.getMonth() + 1) + "-" + this.formatDatePart(value.getDate()) } })
                 : this.setState({ userInput: { ...userInput, [name]: value } })
-        this.setState({ dateCriteria, filterActive: false })
-        this.setState({ userInput: { ...userInput, [name]: value } })
+        this.setState({ dateCriteria, filterActive: false, userInput: { ...userInput, [name]: value } })
     }
 
     renderHeader = () => (
-        <div className="d-flex justify-content-between">
-            <div className="d-flex justify-content-between">
+        <div className="d-flex justify-content-end">
+            {/* <div className="d-flex justify-content-between">
                 <span className="p-input-icon-left">
                     <i className="pi pi-search" />
                     <InputText value={this.state.globalFilterValue} name="searchInput" onChange={(e) => this.onGlobalFilterChange(e)} placeholder="Search" className="p-inputtext-sm block global-search-input" />
                 </span>
-            </div>
+            </div> */}
             <div>
-                <Button type="button" icon="pi pi-filter" label="Advanced Filters" className="p-button-outlined p-button-sm me-2" onClick={() => this.handleActionClick("", 'displayPosition', 'top-right')} />
+                <Button type="button" icon="pi pi-filter" label="Advanced Filters" className="p-button-outlined p-button-sm me-2" onClick={() => this.handleActionClick("filterDialog", 'displayPosition', 'top-right')} />
                 <Button type="button" icon="pi pi-filter-slash" label="Clear" className="p-button-outlined p-button-sm p-button-danger" onClick={() => this.clearFilter("")} />
             </div>
         </div>
     )
 
-    onGlobalFilterChange = (e) => {
-        const { value } = e.target
-        let filter = { filtering: {} };
-        filter.filtering.searchText = value
-        clearTimeout(this.state.timer)
+    // onGlobalFilterChange = (e) => {
+    //     const { value } = e.target
+    //     let filter = { filtering: {} };
+    //     filter.filtering.searchText = value
+    //     clearTimeout(this.state.timer)
 
-        const newTimer = setTimeout(() => {
-            this.fetchRequests(filter);
-        }, 1000);
+    //     const newTimer = setTimeout(() => {
+    //         this.fetchAllKYCRequests(filter);
+    //     }, 1000);
 
-        this.setState({ timer: newTimer, globalFilterValue: value })
-    }
+    //     this.setState({ timer: newTimer, globalFilterValue: value })
+    // }
 
     clearFilter = (name) => {
-        this.fetchRequests({})
-        this.setState({ disableDateFilter: true, disableStatusFilter: true, globalFilterValue: "", advFilters: [], userInput: { kycStatus: null, criteria: null }, active: true })
+        this.fetchAllKYCRequests("")
+        this.setState({ disableDateFilter: true, disableStatusFilter: true, globalFilterValue: "", advFilters: [], userInput: { allKYCData: null, criteria: null }, idDatePickerHidden: true })
         if (name != "") {
             this.onHide(name);
         }
     }
 
-    fetchApiUserEachRequest = (data) => {
+    fetchKYCDetailsById = (data) => {
         if (data !== null && data !== undefined) {
             this.props.getUserKYCRequest(data.id).then(() => {
-
+                this.setState({ kycData: this.props.userKycRequest })
             })
         }
     }
 
     handleActionClick = (data, name, position) => {
+        this.setState({ dialog: '' })
         let state = {
             [`${name}`]: true
         };
@@ -167,85 +181,60 @@ class KycRequestsList extends React.Component {
             }
         }
         this.setState(state);
-        this.setState({ btnDelete: false })
-        if (data != "") {
-            this.fetchApiUserEachRequest(data);
+        if (typeof (data) != 'string') {
+            this.setState({ dialog: 'editDialog' })
+            this.fetchKYCDetailsById(data);
+        } else if (data === "filterDialog") {
+            this.setState({ dialog: 'filterDialog' })
+        } else {
+            this.setState({ dialog: 'rejectionDialog' })
         }
-
     }
 
-    renderFooter = (name, dialog) => {
-        const { userInput } = this.state;
-        if (dialog === 'filters') {
-            return (
+
+    renderFooter = (name) => {
+        const { userInput, kycData } = this.state;
+        return name === 'displayPosition' ?
+            <>
+                <Button disabled={userInput.kycStatus != null || userInput.criteria != null ? false : true} label="Apply" icon="pi pi-check" onClick={() => this.applyAdvFilters(name)} className="p-button-text p-button-sm" />
+                <Button disabled={userInput.kycStatus != null || userInput.criteria != null ? false : true} label="Clear" icon="pi pi-filter-slash" onClick={() => this.clearFilter(name)} className="p-button-sm p-button-danger" autoFocus />
+            </> :
+            name === 'displayRejectPopUp' ?
                 <>
-                    <Button disabled={userInput.kycStatus != null || userInput.criteria != null ? false : true} label="Apply" icon="pi pi-check" onClick={() => this.applyAdvFilters(name)} className="p-button-text p-button-sm" />
-                    <Button disabled={userInput.kycStatus != null || userInput.criteria != null ? false : true} label="Clear" icon="pi pi-filter-slash" onClick={() => this.clearFilter(name)} className="p-button-sm p-button-danger" autoFocus />
-                </>
-            )
-        }
-        if (name === 'displayRejectPopUp') {
-            return (<>
-                <Button icon="pi pi-check" className="p-button-sm p-button-text" label="Submit" name="kycStatusMessage" value="apply" onClick={(e) => this.acceptUpdateMessageUserInfo(e)} />
-                <Button icon="pi pi-times" className="p-button-sm p-button-danger" label="Cancel" name="kycStatusMessage" value="clear" onClick={() => this.clearUpdateMessageUserInfo()} />
-            </>)
-        }
-        else {
-            if (this.state.kycEachStatus.status === "REJECTED") {
-
-            } else {
-                return (<>
-                    <Button icon="pi pi-check" label='Approved' className="p-button-success  p-button-sm" name="kycStatus" value="approved" onClick={() => this.acceptUpdateUserInfo()} />
-                    <Button icon="pi pi-times" label='Rejected' className="p-button-danger  p-button-sm" name="kycStatus" value="rejected" onClick={() => this.handleActionClick('', 'displayRejectPopUp')} />
-                </>)
-            }
-        }
+                    <Button icon="pi pi-check" className="p-button-sm p-button-text" label="Submit" onClick={this.submitKYCRejection} />
+                    <Button icon="pi pi-times" className="p-button-sm p-button-danger" label="Cancel" onClick={() => this.setState({ displayRejectPopUp: false, dialog: 'editDialog' })} />
+                </> :
+                name === 'displayResponsive' ?
+                    kycData.status !== 'REJECTED' ?
+                        <>
+                            <Button icon="pi pi-check" label='Approve' className="p-button-success  p-button-sm" name="kycStatus" value="approved" onClick={() => this.setState({ confirmDialog: true })} />
+                            <Button icon="pi pi-times" label='Reject' className="p-button-danger  p-button-sm" name="kycStatus" value="rejected" onClick={() => this.handleActionClick('rejectionDialog', 'displayRejectPopUp')} />
+                        </> :
+                        null
+                    : null
     }
 
-    acceptUpdateMessageUserInfo = () => {
-        this.setState({ userInput: { comment: this.state.userInput.comment } })
-        this.onHide('displayRejectPopUp')
-        this.onHide('displayResponsive')
-    }
-
-    clearUpdateMessageUserInfo = () => {
-        this.setState({ userInput: { comment: this.state.kycEachStatus.comments } })
-        this.onHide('displayRejectPopUp')
-    }
-
-    acceptUpdateUserInfo = () => {
-        this.setState({ confirmDialog: true })
+    submitKYCRejection = () => {
+        let requestData = {};
+        requestData.id = this.state.kycData.id;
+        requestData.action = 'reject';
+        requestData.comments = this.state.userInput.comment;
+        this.updateKYCStatus(requestData);
     }
 
     onHide = (name) => {
         let state = { [`${name}`]: false };
-        this.setState({ confirmDialog: false })
         this.setState(state);
     }
 
     acceptUpdate = () => {
-        let temp = this.state.kycStatus
-        if (this.state.displayResponsive === true) {
-            this.onHide('displayResponsive')
-        } else if (this.state.displayRejectPopUp === true) {
-            this.onHide('displayRejectPopUp')
-            this.onHide('displayResponsive')
+        if (this.state.kycDataStatus != {}) {
+            let data = {};
+            data.id = this.state.kycData.id;
+            data.action = 'approve';
+            data.comments = 'Approved'
+            this.updateKYCStatus(data);
         }
-        if (this.state.btnDelete) {
-            let obj = this.state.kycStatus.findIndex(i => i.id === this.state.kycEachStatus.id);
-            temp.splice(obj, 1);
-            console.log(temp, obj);
-            this.setState({ kycStatus: temp, confirmDialog: false, btnDelete: false })
-        }
-    }
-
-    rejectUpdate = () => {
-        this.setState({ confirmDialog: false, btnDelete: false })
-    }
-
-    changeStatusValue = (event) => {
-        this.state.kycEachStatus.status = event
-        this.setState(this.state.kycEachStatus)
     }
 
     handleAdvFiltersChange = (e) => {
@@ -275,11 +264,11 @@ class KycRequestsList extends React.Component {
         if (advFilters.length > 0) {
             let filter = { filtering: {} }
             filter.filtering.status = userInput.kycStatus
-            this.fetchRequests(filter)
+            this.fetchAllKYCRequests(filter)
             clearTimeout(this.state.timer)
 
             const newTimer = setTimeout(() => {
-                this.fetchRequests(filter);
+                this.fetchAllKYCRequests(filter);
             }, 1000);
             this.setState({ timer: newTimer })
         }
@@ -290,112 +279,97 @@ class KycRequestsList extends React.Component {
         return partValue < 10 ? "0" + partValue : partValue;
     }
 
-    reqDateBodyTemplate = (rowData) => (
-        new Date(rowData.updateDate).toLocaleDateString()
-    )
-
     render() {
+        const { dialog, kycData, displayPosition, displayRejectPopUp, displayResponsive, position, disableStatusFilter,
+            userInput, statusOptions, advFilters, idDatePickerHidden, dateCriteria, confirmDialog, allKYCData, loading } = this.state;
         return (
-            <div>
-                <div className='p-2'>
-                    <DataTable id="DataTable"
-                        value={this.state.kycStatus} header={this.renderHeader} paginator={true} rows={10} dataKey="id"
-                        loading={this.state.loading} responsiveLayout="scroll" showGridlines
-                        size="small" emptyMessage="No records found."
-                    >
-                        <Column field="person.firstName" header="First Name" sortable style={{ width: '30%' }} />
-                        <Column field="person.lastName" header="Last Name" sortable style={{ width: '30%' }} />
-                        <Column field="updateDate" header="Req Date" sortable body={this.reqDateBodyTemplate} style={{ width: '20%' }} />
-                        <Column field="status" body={this.statusFormat} style={{ width: '10%' }} sortable header="Status" />
-                        <Column body={this.actionTemplate} header="Actions" style={{ width: '10%' }} />
-                    </DataTable>
-                </div>
-                <Dialog
-                    header={"Id: " + this.state.kycEachStatus.id}
-                    visible={this.state.displayResponsive}
-                    onHide={() => this.onHide('displayResponsive')}
-                    breakpoints={{ '960px': '75vw', '640px': '100vw' }}
-                    style={{ width: '50vw' }}
-                    footer={this.renderFooter('displayResponsive')}
-                    draggable={false}
-                    resizable={false} >
-
-                    <div className='row mt-4'>
-                        <div className="col-md-12 mb-4">
-                            <span className="field-kyc-image">
-                                <div className='card p-2'>
-                                    <Image src={img}
-                                        preview
-                                        width="100%" height="400"
-                                        className=""
-                                        alt={img}
-                                    />
-                                </div>
-                                <label className="field-kyc-label" htmlFor="age">User ID</label>
-                            </span>
+            <>
+                {this.state.loaderShow ?
+                    <div className='bg-transparent w-100 h-100 d-flex justify-content-center align-items-center'>
+                        <img src={loader} width='20%' />
+                    </div> :
+                    <div>
+                        <div className='p-2'>
+                            <DataGrid
+                                columns={this.columns}
+                                value={allKYCData}
+                                responsiveLayout="scroll"
+                                emptyMessage="No records found."
+                                rows={10}
+                                dataKey="id"
+                                loading={loading}
+                                showGridlines={true}
+                                size="small"
+                                header={this.renderHeader}
+                            />
                         </div>
-
-                        {this.state.kycEachStatus.status === "REJECTED" ? (<div className='row my-3'>
-                            <div className="field col-md-12">
-                                <span className="p-float-label">
-                                    <InputTextarea className="p-inputtext-sm block w-100" id="comment" name="comment" rows={5} cols={30} value={this.state.userInput.comment != undefined ? this.state.userInput.comment : this.state.kycEachStatus.comments} onChange={(e) => this.handleChange(e)} />
-                                    <label htmlFor="comment">Comment</label>
-                                </span>
-                            </div>
-                        </div>) : null}
+                        {dialog !== '' ?
+                            <Dialog
+                                header={dialog === 'filterDialog' ? "Advanced filters" : dialog === 'rejectionDialog' ? 'Comments' : "Id: " + kycData.id}
+                                visible={dialog === 'filterDialog' ? displayPosition : dialog === 'rejectionDialog' ? displayRejectPopUp : displayResponsive}
+                                onHide={() => this.onHide(dialog === 'filterDialog' ? 'displayPosition' : dialog === 'rejectionDialog' ? 'displayRejectPopUp' : 'displayResponsive')}
+                                position={dialog === 'filterDialog' ? position : null}
+                                breakpoints={{ '960px': '75vw', '640px': '100vw' }}
+                                style={dialog === 'filterDialog' ? { width: '20vw' } : dialog === 'rejectionDialog' ? { width: '30vw', height: '50vh' } : { width: '50vw' }}
+                                footer={this.renderFooter(dialog === 'filterDialog' ? 'displayPosition' : dialog === 'rejectionDialog' ? 'displayRejectPopUp' : 'displayResponsive')}
+                                draggable={false}
+                                resizable={false}
+                            >
+                                {dialog === 'filterDialog' ?
+                                    <div className="row">
+                                        <div className="col-md-12 d-flex align-items-center mb-3">
+                                            <Checkbox inputId="statusFilter" name="statusFilter" value="statusFilter" onChange={this.handleAdvFiltersChange} className="me-3" checked={advFilters.indexOf('statusFilter') !== -1} />
+                                            <Dropdown className="p-inputtext-sm w-100" disabled={disableStatusFilter} value={userInput.kycStatus} name='kycStatus' options={statusOptions} onChange={this.handleChange} optionLabel="name" placeholder="Select Status" />
+                                        </div>
+                                        {/* <div className="col-md-12 d-flex align-items-center">
+                                    <Checkbox inputId="dateFilter" name="dateFilter" value="dateFilter" onChange={this.handleAdvFiltersChange} className="me-3" checked={this.state.advFilters.indexOf('dateFilter') !== -1} />
+                                    <Dropdown placeholder="Select a value" className="p-inputtext-sm block w-100" disabled={this.state.disableDateFilter} value={this.state.userInput.criteria} name="criteria" options={this.state.dateFilters} optionLabel="name" onChange={this.handleChange} />
+                                </div> */}
+                                        <div hidden={idDatePickerHidden} id='dateFields' className="col-md-12 mt-3">
+                                            <Calendar className="p-inputtext-sm block me-2" name="startDate" disabled={idDatePickerHidden} value={dateCriteria.startDate} placeholder={dateCriteria.displayStartDate} onChange={this.handleChange} dateFormat="dd-mm-yy" />
+                                            <Calendar className="p-inputtext-sm block ms-2" name="endDate" disabled={idDatePickerHidden} value={dateCriteria.endDate} placeholder={dateCriteria.displayEndDate} onChange={this.handleChange} dateFormat="dd-mm-yy" />
+                                        </div>
+                                    </div> :
+                                    dialog === 'rejectionDialog' ?
+                                        <div className='row my-3'>
+                                            <div className="field col-md-12">
+                                                <span className="p-float-label">
+                                                    <InputTextarea className="p-inputtext-sm block w-100" id="comment" name="comment" rows={5} cols={30} value={userInput.comment != undefined ? userInput.comment : kycData.comments} onChange={(e) => this.handleChange(e)} />
+                                                    <label htmlFor="comment">Comment</label>
+                                                </span>
+                                            </div>
+                                        </div> :
+                                        <div className='row mt-4'>
+                                            <div className="col-md-12 mb-4">
+                                                <span className="field-kyc-image">
+                                                    <div className='card p-2'>
+                                                        <Image src={img}
+                                                            preview
+                                                            width="100%" height="400"
+                                                            className=""
+                                                            alt={img}
+                                                        />
+                                                    </div>
+                                                    <label className="field-kyc-label" htmlFor="age">User ID</label>
+                                                </span>
+                                            </div>
+                                            {kycData.status === "REJECTED" ?
+                                                <div className="field col-md-12 my-3">
+                                                    <span className="p-float-label">
+                                                        <InputTextarea className="p-inputtext-sm block w-100" id="comment" name="comment" rows={3} value={userInput.comment != undefined ? userInput.comment : kycData.comments} onChange={(e) => this.handleChange(e)} />
+                                                        <label htmlFor="comment">Comment</label>
+                                                    </span>
+                                                </div>
+                                                : null}
+                                        </div>
+                                }
+                            </Dialog> : null
+                        }
+                        <ConfirmDialog draggable={false} resizable={false} visible={confirmDialog} onHide={() => this.onHide('confirmDialog')} message="Are you sure you want to submit?"
+                            header="Confirmation" icon="pi pi-exclamation-triangle" accept={() => this.acceptUpdate()} />
                     </div>
-                </Dialog>
-                <Dialog
-                    header="Advanced filters"
-                    visible={this.state.displayPosition}
-                    position={this.state.position}
-                    modal
-                    style={{ width: '20vw' }}
-                    footer={this.renderFooter('displayPosition', 'filters')}
-                    onHide={() => this.onHide('displayPosition')}
-                    draggable={false}
-                    resizable={false}
-                >
-                    <>
-                        <div className="row">
-                            <div className="col-md-12 d-flex align-items-center mb-3">
-                                <Checkbox inputId="statusFilter" name="statusFilter" value="statusFilter" onChange={this.handleAdvFiltersChange} className="me-3" checked={this.state.advFilters.indexOf('statusFilter') !== -1} />
-                                <Dropdown className="p-inputtext-sm w-100" disabled={this.state.disableStatusFilter} value={this.state.userInput.kycStatus} name='kycStatus' options={this.state.statusOptions} onChange={this.handleChange} optionLabel="name" placeholder="Select Status" />
-                            </div>
-                            <div className="col-md-12 d-flex align-items-center">
-                                <Checkbox inputId="dateFilter" name="dateFilter" value="dateFilter" onChange={this.handleAdvFiltersChange} className="me-3" checked={this.state.advFilters.indexOf('dateFilter') !== -1} />
-                                <Dropdown placeholder="Select a value" className="p-inputtext-sm block w-100" disabled={this.state.disableDateFilter} value={this.state.userInput.criteria} name="criteria" options={this.state.dateFilters} optionLabel="name" onChange={this.handleChange} />
-                            </div>
-                            <div hidden={this.state.active} id='dateFields' className="col-md-12 mt-3">
-                                <Calendar className="p-inputtext-sm block me-2" name="startDate" disabled={this.state.active} value={this.state.dateCriteria.startDate} placeholder={this.state.dateCriteria.displayStartDate} onChange={this.handleChange} dateFormat="dd-mm-yy" />
-                                <Calendar className="p-inputtext-sm block ms-2" name="endDate" disabled={this.state.active} value={this.state.dateCriteria.endDate} placeholder={this.state.dateCriteria.displayEndDate} onChange={this.handleChange} dateFormat="dd-mm-yy" />
-                            </div>
-                        </div>
-                    </>
-                </Dialog>
-                <Dialog
-                    header="Comments"
-                    visible={this.state.displayRejectPopUp}
-                    breakpoints={{ '960px': '75vw', '640px': '100vw' }}
-                    modal
-                    style={{ width: '30vw', height: '50vh' }}
-                    footer={this.renderFooter('displayRejectPopUp')}
-                    onHide={() => this.onHide('displayRejectPopUp')}
-                    draggable={false}
-                    resizable={false}
-                >
-                    <div className='row my-3'>
-                        <div className="field col-md-12">
-                            <span className="p-float-label">
-                                <InputTextarea className="p-inputtext-sm block w-100" id="comment" name="comment" rows={5} cols={30} value={this.state.userInput.comment != undefined ? this.state.userInput.comment : this.state.kycEachStatus.comments} onChange={(e) => this.handleChange(e)} />
-                                <label htmlFor="comment">Comment</label>
-                            </span>
-                        </div>
-                    </div>
-                </Dialog>
-                <ConfirmDialog draggable={false} resizable={false} visible={this.state.confirmDialog} onHide={this.rejectUpdate} message={this.state.btnDelete ? "Are you sure you want to delete?" : "Are you sure you want to submit?"}
-                    header="Confirmation" icon="pi pi-exclamation-triangle" accept={() => this.acceptUpdate()} reject={() => this.rejectUpdate()} />
-            </div>
+                }
+            </>
         );
     };
 }
@@ -409,7 +383,8 @@ const mapStateToProps = state => {
 };
 const mapDispatchToProps = {
     getAllKYCRequests,
-    getUserKYCRequest
+    getUserKYCRequest,
+    updateUserKYC
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(KycRequestsList);

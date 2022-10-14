@@ -106,6 +106,7 @@ export const currencyConverter = new Intl.NumberFormat('en-IN', {
 });
 
 export const currencyNumberOnly = new Intl.NumberFormat('en-IN', { 
+  style: 'currency', 
   currency: 'INR', 
   currencyDisplay: 'symbol',
   minimumFractionDigits: 2, 

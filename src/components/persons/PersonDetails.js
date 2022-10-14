@@ -12,13 +12,16 @@ import { Badge } from 'primereact/badge';
 import { ToggleButton } from 'primereact/togglebutton';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { SelectButton } from 'primereact/selectbutton';
-import { getUser, updateUser } from "../../actions/getUser";
+import { Chip } from 'primereact/chip';
+import { getUser, updateUser, updateUserAccStatus } from "../../actions/user";
 import { getAllKYCRequests, getUserKYCRequest } from "../../actions/kyc";
 import { getBrands, getBrandModels } from "../../actions/brands";
 import { getDistricts } from "../../actions/getDistricts";
 import { updateVehicle } from "../../actions/vehicle";
 import img from "../../assets/images/galleria7.jpg";
+import SubscriptionPlans from "../vehicle/SubscriptionPlans";
 import KycModal from "./KycModal";
+import subscribeIcon from '../../assets/Icons/subscribeIcon.svg';
 
 class PersonDetails extends React.Component {
     constructor(props) {
@@ -41,14 +44,17 @@ class PersonDetails extends React.Component {
             personData: { kycReqId: null, kycComment: null, kycProof: null, },
             userKyc: {},
             userData: {},
-            accStatusDisable: true
-        }
+            accStatusDisable: true,
+            displayPlanModal: false,
+            showModal: false
+        };
+        this.DateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
     }
 
     fetchUserKycStatus = (id) => {
-        this.props.getUserKYCRequest(id).then(() => {
-            this.setState({ userKyc: this.props.userKycRequest })
-        });
+        // this.props.getUserKYCRequest(id).then(() => {
+        //     this.setState({ userKyc: this.props.userKycRequest })
+        // });
     }
 
     getUserById = (filters) => {
@@ -171,9 +177,21 @@ class PersonDetails extends React.Component {
         })
     }
 
+    updateAccStatus = (args) => {
+        const { apiBody } = this.state;
+        let data = {};
+        data.userId = this.props.user.id;
+        data.status = apiBody.accStatus
+        console.log(data)
+        this.props.updateUserAccStatus(data).then(() => {
+            this.getUserById("")
+            this.closeModal()
+        })
+    }
+
     componentDidMount() {
         this.getUserById("");
-        this.fetchAllKycRequests();
+        //this.fetchAllKycRequests();
     }
 
     componentDidUpdate(prevState) {
@@ -214,6 +232,9 @@ class PersonDetails extends React.Component {
                 this.fetchBrandModels({ id });
             }
         }
+        if (name === 'accStatus') {
+            this.setState({ apiBody: { ...apiBody, [name]: value === true ? 'enable' : 'disable' } })
+        }
     }
 
     handleActionClick(brandId, name, position) {
@@ -233,13 +254,15 @@ class PersonDetails extends React.Component {
             this.fetchBrandModels(data);
         }
         this.setState(state);
-        console.log(this.state.apiBody)
     }
 
     onHide = (name) => {
         this.setState({
             [`${name}`]: false
         });
+        if (name === 'displayPlanModal') {
+            this.getUserById("");
+        }
     }
 
     hideFinModal = () => {
@@ -262,19 +285,11 @@ class PersonDetails extends React.Component {
         //     inputField.classList.add("focus-background");
 
         // }
-        this.setState({ accStatusDisable: false, apiBody: {} });
+        this.setState({ accStatusDisable: false, apiBody: {}, });
     }
 
     tabDisabled = (tabIndex) => {
-        if (this.state.editMode) {
-            return false;
-        }
-        else {
-            if (this.state.activeIndex !== tabIndex) {
-                return true;
-            }
-            return false;
-        }
+        return this.state.accStatusDisable ? false : this.state.activeIndex !== tabIndex ? true : false
     }
 
     updateChanges = () => {
@@ -295,7 +310,9 @@ class PersonDetails extends React.Component {
 
     acceptConfirmDialog = () => {
         this.setState({ editMode: true })
-        this.updateChanges();
+        // this.updateChanges();
+        this.updateAccStatus()
+
     }
 
     rejectConfirmDialog = () => {
@@ -308,6 +325,7 @@ class PersonDetails extends React.Component {
 
     hideKycPopUp = () => {
         this.setState({ kycModal: false });
+        this.getUserById("");
     }
 
     dialogFooter = () => (
@@ -329,8 +347,12 @@ class PersonDetails extends React.Component {
         this.setState({ userInput: {} })
     }
 
+    choosePlans = () => {
+        this.setState({ showModal: true, displayPlanModal: true })
+    }
+
     render() {
-        const { brand, model, rideType, userData } = this.state;
+        const { brand, model, rideType, userData, vehicleData } = this.state;
         return (
             <>
                 <Dialog className="main-dialog" header={this.dialogHeaders} footer={this.dialogFooter} visible={this.props.modelVisible} onHide={this.closeModal} breakpoints={{ '960px': '75vw', '640px': '100vw' }} style={{ width: '70vw' }} draggable={false} resizable={false}>
@@ -440,17 +462,17 @@ class PersonDetails extends React.Component {
                                             </div>
                                             <div className="col-md-4 mb-4">
                                                 <span className="field-image">
-                                                    {this.state.userKyc != {} ?
-                                                        this.state.userKyc.status === "APPROVED" ?
+                                                    {userData != {} ?
+                                                        userData.kycStatus !== "PENDING" ?
                                                             <i className="pi pi-id-card p-text-secondary p-overlay-badge ms-3 icon-size" ><Badge severity="success" className="status-badge"></Badge></i> :
-                                                            this.state.userKyc.status === "REJECTED" ? <i className="pi pi-id-card p-text-secondary p-overlay-badge ms-3 icon-size" onClick={this.openKycPopUp}><Badge severity="danger" className="status-badge"></Badge></i> :
-                                                                this.state.userKyc.status === "PENDING" ? <i className="pi pi-id-card p-text-secondary p-overlay-badge ms-3 icon-size" onClick={this.openKycPopUp}><Badge severity="warning" className="status-badge"></Badge></i> : null : null}
+                                                            userData.kycRequest !== undefined ? userData.kycRequest.status === 'REJECTED' ? <i className="pi pi-id-card p-text-secondary p-overlay-badge ms-3 icon-size" onClick={this.openKycPopUp}><Badge severity="danger" className="status-badge"></Badge></i> :
+                                                                <i className="pi pi-id-card p-text-secondary p-overlay-badge ms-3 icon-size" onClick={this.openKycPopUp}><Badge severity="warning" className="status-badge"></Badge></i> : null : null}
                                                     <label className="field-label" htmlFor="age">Kyc Status</label>
                                                 </span>
                                             </div>
                                             <div className="col-md-4 col-5 mb-4">
                                                 <span className="field-image">
-                                                    <ToggleButton onLabel="Active" disabled={this.state.accStatusDisable} offLabel="Disabled" className="w-full sm:w-10rem p-button-sm" aria-label="Confirmation" checked={this.state.userInput.accStatus} name="accStatus" onChange={this.handleChange} />
+                                                    <ToggleButton onLabel="Enabled" disabled={this.state.accStatusDisable} offLabel="Disabled" className="w-full sm:w-10rem p-button-sm" aria-label="Confirmation" checked={this.state.userInput.accStatus} name="accStatus" onChange={this.handleChange} />
                                                     <label className="field-label" htmlFor="accStatus">Account Status</label>
                                                 </span>
                                             </div>
@@ -519,18 +541,36 @@ class PersonDetails extends React.Component {
                                                                     <label htmlFor="model">City</label>
                                                                 </span>
                                                             </div>
-                                                            <div className="field col-md-2 mb-4">
+                                                            <div className="field col-md-3 mb-4">
                                                                 <span className="p-float-label">
-                                                                    <Button name="normalRide" className={this.state.normalRide ? "p-button-rounded p-button-success" : "p-button-rounded p-button-danger"} disabled={this.state.editMode} label="Normal Ride" icon={this.state.normalRide ? "pi pi-check" : "pi pi-times"} iconPos="right" />
-
+                                                                    {/* <Button name="normalRide" className={this.state.normalRide ? "p-button-rounded p-button-success" : "p-button-rounded p-button-danger"} disabled={this.state.editMode} label="Normal Ride" icon={this.state.normalRide ? "pi pi-check" : "pi pi-times"} iconPos="right" /> */}
+                                                                    <Chip label="Normal Ride" icon={this.state.normalRide ? "pi pi-check" : "pi pi-times"} className="mr-2 mb-2 me-2" style={{ background: this.state.normalRide ? '#22C55E' : '#EF4444', color: '#fff' }} />
+                                                                    <Chip label="Special Ride" icon={this.state.specialRide ? "pi pi-check" : "pi pi-times"} className="mr-2 mb-2" style={{ background: this.state.specialRide ? '#22C55E' : '#EF4444', color: '#fff' }} />
                                                                     {/* <SelectButton className="" value={rideType} disabled={this.state.editMode} options={this.state.rideOptions} onChange={this.handleChange} name="ride" optionLabel="name" multiple /> */}
                                                                 </span>
                                                             </div>
-                                                            <div className="field col-md-2 mb-4">
+                                                            <div className="col-md-3 d-flex justify-content-end">
+                                                                <div className="field col-md-7 pe-2">
+                                                                    <span className="field-image">
+                                                                        <Chip label={new Date(vehicleData.subscriptionExpiryDate).toLocaleDateString('en-GB', this.DateOptions)} className="justify-content-center w-100" style={{ background: new Date(vehicleData.subscriptionExpiryDate) >= new Date() ? '#22C55E' : '#EF4444', color: '#fff' }} />
+                                                                        <label className="field-label" htmlFor="age">{new Date(vehicleData.subscriptionExpiryDate) >= new Date() ? 'Subscription Expiring on' : 'Subscription Expired on'}</label>
+                                                                    </span>
+                                                                </div>
+                                                                <div className="me-3">
+                                                                    <span className="field-image">
+                                                                        <Button className="p-button-rounded p-button-info p-button-outlined p-button-sm justify-content-center ms-1" aria-label="Plans" onClick={() => this.choosePlans()}>
+                                                                            <i className="pi pi-bars" style={{ 'fontSize': '1.5em' }} ></i>
+                                                                        </Button>
+                                                                        <label className="field-label" htmlFor="age">Plans</label>
+                                                                        {/* <img className="cursor-pointer" src={subscribeIcon} style={{ width: '35px' }} onClick={() => this.choosePlans()} /> */}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            {/* <div className="field col-md-2 mb-4">
                                                                 <span className="p-float-label">
                                                                     <Button name="specialRide" className={this.state.specialRide ? "p-button-rounded p-button-success" : "p-button-rounded p-button-danger"} disabled={this.state.editMode} label="Special Ride" icon={this.state.specialRide ? "pi pi-check" : "pi pi-times"} iconPos="right" />
                                                                 </span>
-                                                            </div>
+                                                            </div> */}
                                                         </div>
                                                     </div>
 
@@ -552,10 +592,15 @@ class PersonDetails extends React.Component {
                     <KycModal
                         modal={this.state.kycStatus}
                         hideDialog={this.hideKycPopUp}
-                        status={this.state.userKyc.status}
-                        proofImage={this.state.personData.kycProof}
-                        comment={this.state.personData.kycComment}
+                        kycRequestData={userData.kycRequest}
                     /> : null}
+                {this.state.showModal != false ?
+                    <SubscriptionPlans
+                        visible={this.state.displayPlanModal}
+                        hideDialog={() => this.onHide('displayPlanModal')}
+                        vehicleData={vehicleData}
+                    /> : null
+                }
             </>
         )
     }
@@ -585,7 +630,8 @@ const mapDispatchToProps = {
     getBrands,
     getBrandModels,
     updateVehicle,
-    getAllKYCRequests
+    getAllKYCRequests,
+    updateUserAccStatus
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(PersonDetails);

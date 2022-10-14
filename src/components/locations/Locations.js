@@ -1,16 +1,19 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux';
-import { getLocationsByDistrictId, getLocationCategories } from '../../actions/locationDetails';
 import { Dropdown } from 'primereact/dropdown';
-import DataGrid from '../common/DataGrid';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
-import LocationEditor from './LocationEditor';
+import { Paginator } from 'primereact/paginator';
+import { Checkbox } from 'primereact/checkbox';
+import { Badge } from "primereact/badge";
 import { Dialog } from 'primereact/dialog';
 import { ConfirmPopup } from 'primereact/confirmpopup';
 import { getDistricts } from '../../actions/getDistricts';
-import { Paginator } from 'primereact/paginator';
-import { Checkbox } from 'primereact/checkbox';
+import { getLocationsByDistrictId, getLocationCategories } from '../../actions/locationDetails';
+import DataGrid from '../common/DataGrid';
+import LocationEditor from './LocationEditor';
+import loader from '../../assets/loaders/rickshawLoading.gif';
+import '../App.scss'
 
 class Locations extends Component {
     constructor(props) {
@@ -42,16 +45,18 @@ class Locations extends Component {
             locationList: { metaData: { totalCount: 0 } },
             advFilters: [],
             disabledLocCategoryFilter: true,
-            disabledLocStatusFilter: true
+            disabledLocStatusFilter: true,
+            pageParams: {},
+            loaderShow: false
         };
         this.columns = [
             { field: "locationName", header: "Location", sortable: true },
             { field: "locationLat", header: "Latitude" },
             { field: "locationLong", header: "Longitude" },
-            { field: "districtId", header: "District", sortable: true },
-            { field: "locationCategoryId", header: "Location Category", sortable: true },
-            { field: "status", header: "Status", sortable: true },
-            { header: "Actions", body: this.customBodyTemplate, style: { width: '5%' } }
+            { field: "districtName", header: "District", sortable: true, bodyStyle: { textAlign: 'center' }, alignHeader: 'center' },
+            { field: "locationCategoryName", header: "Location Category", bodyStyle: { textAlign: 'center' }, sortable: true, style: { width: '10%' }, alignHeader: 'center' },
+            { field: "status", header: "Status", body: this.customBodyTemplate, bodyStyle: { textAlign: 'center' }, sortable: true, style: { width: '10%' }, alignHeader: 'center' },
+            { field: 'action', header: "Action", body: this.customBodyTemplate, bodyStyle: { textAlign: 'center' }, style: { width: '5%' }, alignHeader: 'center' }
         ];
     }
 
@@ -63,21 +68,36 @@ class Locations extends Component {
 
     fetchLocationCategories = () => {
         this.props.getLocationCategories().then(() => {
-            this.setState({ loading: false })
+            this.setState({ loading: false, loaderShow: false })
         })
     }
 
     componentDidMount() {
+        this.setState({ loaderShow: true })
         this.fetchDistricts();
         this.fetchLocationCategories();
     }
 
     fetchDistrictLocations = (filters) => {
         if (filters != "") {
-            filters.id = "10000001";
-            this.props.getLocationsByDistrictId(filters).then(() => {
-                this.setState({ loading: false, elementHidden: false })
-            });
+            console.log(typeof (filters))
+            if (typeof (filters) === 'object') {
+                console.log(filters)
+                filters.id = "10000001";
+                this.props.getLocationsByDistrictId(filters).then(() => {
+                    this.setState({ loading: false, elementHidden: false, pageParams: filters, locationList: this.props.districtLocations })
+                });
+            }
+            else if (typeof (filters) === 'number') {
+                console.log(filters)
+                this.props.getLocationsByDistrictId(this.state.pageParams).then(() => {
+                    this.setState({
+                        locationList: this.props.districtLocations,
+                        loading: false,
+                        elementHidden: false,
+                    })
+                });
+            }
         } else {
             this.props.getLocationsByDistrictId(this.state.params).then(() => {
                 this.setState({
@@ -87,6 +107,7 @@ class Locations extends Component {
                 })
             });
         }
+
     }
 
     handleChange = (e) => {
@@ -94,7 +115,7 @@ class Locations extends Component {
         const target = e.target;
 
         if (target.name === "districtFilter") {
-            this.setState({ districtValue: target.value })
+            this.setState({ districtValue: target.value, loading: true })
             this.fetchDistrictLocations("")
         }
         if (e.checked) {
@@ -131,7 +152,13 @@ class Locations extends Component {
         clearTimeout(this.state.timer);
 
         const newTimer = setTimeout(() => {
-            this.fetchDistrictLocations(filters)
+            if (value != '') {
+                this.setState({ loading: true })
+                this.fetchDistrictLocations(filters)
+            } else {
+                this.setState({ loading: true })
+                this.fetchDistrictLocations("")
+            }
         }, 1000);
         this.setState({ timer: newTimer, globalFilterValue: value });
     }
@@ -166,10 +193,15 @@ class Locations extends Component {
 
     closeModal = () => {
         this.setState({ displayResponsive: false });
-        this.fetchDistrictLocations("");
+        if (this.state.first > 0) {
+            this.fetchDistrictLocations(this.state.first);
+        } else {
+            this.fetchDistrictLocations("");
+        }
     }
 
     clearFilter = (name) => {
+        this.setState({ loading: true })
         if (name != "" && name != undefined) {
             this.onHide(name)
         }
@@ -179,7 +211,7 @@ class Locations extends Component {
     }
 
     renderHeader = () => (
-        <div className='row'>
+        <div className='row d-flex justify-content-between align-items-center'>
             <div className='col-lg-5 col-sm-6 d-flex'>
                 <span className="p-input-icon-left" hidden={this.state.elementHidden}>
                     <i className="pi pi-search" />
@@ -200,17 +232,21 @@ class Locations extends Component {
     )
 
     customBodyTemplate = (rowData, col) => (
-        <>
-            <span className='me-3' role={'button'}>
-                <i className="pi pi-pencil" onClick={() => this.handleActionClick(rowData, 'displayResponsive')}></i>
-            </span>
-            <span className='' role={'button'}>
-                <i className='pi pi-trash' onClick={() => this.confirmDeleteRow(col)}></i>
-            </span>
-        </>
-    );
+        col.field === "status" ? <Badge value={rowData.status} className="mr-2" severity={rowData.status === "ACTIVE" ? "success" : "danger"} /> :
+            <div>
+                <Button className="p-button-rounded p-button-info p-button-sm me-2" type="button" onClick={() => this.handleActionClick(rowData, 'displayResponsive')} >
+                    <i className="pi pi-pencil" style={{ fontSize: "1em" }}></i>
+                </Button>
+                {/* <Button className="p-button-rounded p-button-danger p-button-sm" onClick={() => this.confirmDeleteRow(col)} >
+                    <i className="pi pi-trash" style={{ fontSize: "1em" }}></i>
+                </Button> */}
+                {/* <span className='me-3' role={'button'}><i className="pi pi-pencil" onClick={() => this.handleActionClick(rowData, 'displayResponsive')}></i> </span>
+                        <span className='' role={'button'}><i className='pi pi-trash' onClick={() => this.confirmDeleteRow(col)}></i></span> */}
+            </div>
+    )
 
     onSort = (e) => {
+        this.setState({ loading: true })
         const { sortOrder } = this.state;
         this.setState({ sortField: e.sortField, sortOrder: e.sortOrder })
         let sortFilters = { sorting: [] }
@@ -225,6 +261,7 @@ class Locations extends Component {
     }
 
     onCustomPaginatorPage = (event) => {
+        this.setState({ loading: true })
         let data = {};
         data.page = event.page + 1;
         data.pageSize = event.rows
@@ -250,6 +287,7 @@ class Locations extends Component {
     }
 
     applyAdvFilters = (name) => {
+        this.setState({ loading: true })
         const { locationStatus, locationCategory } = this.state;
         if (this.state.advFilters.length > 0) {
             let filters = {}
@@ -308,104 +346,114 @@ class Locations extends Component {
         };
 
         return (
+
             <>
-                <DataGrid
-                    columns={this.columns}
-                    value={this.props.districtLocations.data}
-                    stripedRows={true}
-                    size="small"
-                    responsiveLayout="scroll"
-                    showGridlines={true}
-                    dataKey="id"
-                    filters={this.state.filters}
-                    filtering={true}
-                    loading={this.state.loading}
-                    globalFilterFields={['locationName', 'locationLat', 'locationLong', 'districtId', 'status']}
-                    header={this.renderHeader}
-                    emptyMessage="No records found."
-                    removableSort={true}
-                    onSort={this.onSort}
-                    sortField={this.state.sortField}
-                    sortOrder={this.state.sortOrder}
-                />
-                <Paginator
-                    template={this.paginatorTemplate}
-                    first={this.state.first}
-                    rows={this.state.rows}
-                    totalRecords={this.state.locationList.metaData.totalCount}
-                    onPageChange={this.onCustomPaginatorPage}
-                    className="justify-content-end my-3"
-                />
-                {this.state.showModal != false ?
-                    <LocationEditor
-                        visible={this.state.displayResponsive}
-                        rowData={this.state.locationData}
-                        closeModal={this.closeModal}
-                        districts={this.state.districts}
-                        locCategories={this.state.locCategories}
-                    /> : null}
-                <Dialog
-                    header="Advanced filters"
-                    visible={this.state.displayPosition}
-                    modal
-                    position={this.state.position}
-                    style={{ width: '20vw' }}
-                    footer={this.renderFooter('displayPosition', 'filters')}
-                    onHide={() => this.onHide('displayPosition')}
-                    draggable={false}
-                    resizable={false}
-                >
-                    <>
-                        <div className="row g-3 align-items-center">
-                            <div className="col-12 d-flex align-items-center">
-                                {/* <span className="p-float-label"> */}
-                                <Checkbox
-                                    inputId="statusFilter"
-                                    name="statusFilter"
-                                    value="statusFilter"
-                                    onChange={this.handleChange}
-                                    className="me-2"
-                                    checked={this.state.advFilters.indexOf('statusFilter') !== -1}
-                                />
-                                <Dropdown
-                                    disabled={this.state.disabledLocStatusFilter}
-                                    className="p-inputtext-sm block"
-                                    placeholder='Select a status'
-                                    value={this.state.locationStatus}
-                                    options={this.state.statuses}
-                                    optionLabel="name"
-                                    onChange={(e) => this.setState({ locationStatus: e.value })}
-                                />
-                                {/* <label htmlFor="inputtext">Select a status</label> */}
-                                {/* </span> */}
-                            </div>
-                            <div className="col-12 d-flex align-items-center">
-                                {/* <span className="p-float-label"> */}
-                                <Checkbox
-                                    inputId="locCategoryFilter"
-                                    name="locCategoryFilter"
-                                    value="locCategoryFilter"
-                                    onChange={this.handleChange}
-                                    className="me-2"
-                                    checked={this.state.advFilters.indexOf('locCategoryFilter') !== -1}
-                                />
-                                <Dropdown
-                                    disabled={this.state.disabledLocCategoryFilter}
-                                    className="p-inputtext-sm block"
-                                    placeholder='Select a category'
-                                    value={this.state.locationCategory}
-                                    options={this.props.locationCategories.data}
-                                    optionLabel="categoryName"
-                                    onChange={(e) => this.setState({ locationCategory: e.value })}
-                                />
-                                {/* <label htmlFor="inputtext">Select a category</label>
+                <div className='row g-0'>
+                    {this.state.loaderShow ?
+                        <div className='bg-transparent w-100 d-flex justify-content-center align-items-center' style={{ height: '93.5%' }}>
+                            <img src={loader} width='20%' />
+                        </div> :
+                        <>
+                            <DataGrid
+                                columns={this.columns}
+                                value={this.props.districtLocations.data}
+                                stripedRows={true}
+                                size="small"
+                                responsiveLayout="scroll"
+                                showGridlines={true}
+                                dataKey="id"
+                                filters={this.state.filters}
+                                filtering={true}
+                                loading={this.state.loading}
+                                globalFilterFields={['locationName', 'locationLat', 'locationLong', 'districtId', 'status']}
+                                header={this.renderHeader}
+                                emptyMessage="No records found."
+                                removableSort={true}
+                                onSort={this.onSort}
+                                sortField={this.state.sortField}
+                                sortOrder={this.state.sortOrder}
+                            />
+                            <Paginator
+                                template={this.paginatorTemplate}
+                                first={this.state.first}
+                                rows={this.state.rows}
+                                totalRecords={this.state.locationList.metaData.totalCount}
+                                onPageChange={this.onCustomPaginatorPage}
+                                className="justify-content-end"
+                            />
+                            {this.state.showModal != false ?
+                                <LocationEditor
+                                    visible={this.state.displayResponsive}
+                                    rowData={this.state.locationData}
+                                    closeModal={this.closeModal}
+                                    districts={this.state.districts}
+                                    locCategories={this.state.locCategories}
+                                /> : null}
+                            <Dialog
+                                header="Advanced filters"
+                                visible={this.state.displayPosition}
+                                modal
+                                position={this.state.position}
+                                style={{ width: '20vw' }}
+                                footer={this.renderFooter('displayPosition', 'filters')}
+                                onHide={() => this.onHide('displayPosition')}
+                                draggable={false}
+                                resizable={false}
+                            >
+                                <>
+                                    <div className="row g-3 align-items-center">
+                                        <div className="col-12 d-flex align-items-center">
+                                            {/* <span className="p-float-label"> */}
+                                            <Checkbox
+                                                inputId="statusFilter"
+                                                name="statusFilter"
+                                                value="statusFilter"
+                                                onChange={this.handleChange}
+                                                className="me-2"
+                                                checked={this.state.advFilters.indexOf('statusFilter') !== -1}
+                                            />
+                                            <Dropdown
+                                                disabled={this.state.disabledLocStatusFilter}
+                                                className="p-inputtext-sm block"
+                                                placeholder='Select a status'
+                                                value={this.state.locationStatus}
+                                                options={this.state.statuses}
+                                                optionLabel="name"
+                                                onChange={(e) => this.setState({ locationStatus: e.value })}
+                                            />
+                                            {/* <label htmlFor="inputtext">Select a status</label> */}
+                                            {/* </span> */}
+                                        </div>
+                                        <div className="col-12 d-flex align-items-center">
+                                            {/* <span className="p-float-label"> */}
+                                            <Checkbox
+                                                inputId="locCategoryFilter"
+                                                name="locCategoryFilter"
+                                                value="locCategoryFilter"
+                                                onChange={this.handleChange}
+                                                className="me-2"
+                                                checked={this.state.advFilters.indexOf('locCategoryFilter') !== -1}
+                                            />
+                                            <Dropdown
+                                                disabled={this.state.disabledLocCategoryFilter}
+                                                className="p-inputtext-sm block"
+                                                placeholder='Select a category'
+                                                value={this.state.locationCategory}
+                                                options={this.props.locationCategories.data}
+                                                optionLabel="categoryName"
+                                                onChange={(e) => this.setState({ locationCategory: e.value })}
+                                            />
+                                            {/* <label htmlFor="inputtext">Select a category</label>
                                 </span> */}
-                            </div>
-                        </div>
-                    </>
-                </Dialog>
-                {this.state.districtValue == "" ? <div style={{ display: 'flex', width: '100vw', justifyContent: 'center' }}><h3>Kindly select a district first.</h3></div> : null}
-                <ConfirmPopup message="Are you sure you want to proceed?" visible={this.state.confirmDialog} accept={this.acceptConfirmDelete} onHide={this.closeConfirmDeleteRow} />
+                                        </div>
+                                    </div>
+                                </>
+                            </Dialog>
+                            {this.state.districtValue == "" ? <div className='row d-flex text-center py-1'><h3>Kindly select a district first.</h3></div> : null}
+                            <ConfirmPopup message="Are you sure you want to proceed?" visible={this.state.confirmDialog} accept={this.acceptConfirmDelete} onHide={this.closeConfirmDeleteRow} />
+                        </>
+                    }
+                </div>
             </>
         )
     }
@@ -417,8 +465,7 @@ const mapStateToProps = state => {
         districts: state.getDistricts.districts,
         locationCategories: state.locationDetails.locationCategories,
         error: state.locationDetails.error,
-        error: state.getDistricts.error,
-        error: state.locationDetails.error
+        error: state.getDistricts.error
     };
 };
 

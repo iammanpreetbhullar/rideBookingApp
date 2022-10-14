@@ -6,6 +6,7 @@ import { InputText } from 'primereact/inputtext';
 import { Button } from "primereact/button";
 import { Dropdown } from 'primereact/dropdown';
 import { getDistricts } from '../../actions/getDistricts';
+import loader from '../../assets/loaders/rickshawLoading.gif';
 
 class Districts extends React.Component {
     constructor(props) {
@@ -18,7 +19,8 @@ class Districts extends React.Component {
             districts: null,
             timer: null,
             sortField: null,
-            sortOrder: null
+            sortOrder: null,
+            loaderShow: false
         }
         this.statuses = [
             { label: 'ACTIVE', value: 'ACTIVE' },
@@ -29,16 +31,17 @@ class Districts extends React.Component {
     fetchDistricts = (filters) => {
         if (filters !== "") {
             this.props.getDistricts(filters).then(() => {
-                this.setState({ loading: false })
+                this.setState({ loading: false, loaderShow: false })
             })
         } else {
             this.props.getDistricts().then(() => {
-                this.setState({ loading: false })
+                this.setState({ loading: false, loaderShow: false })
             })
         }
     }
 
     componentDidMount() {
+        this.setState({ loaderShow: true })
         this.fetchDistricts("");
         this.initFilters();
     }
@@ -141,28 +144,35 @@ class Districts extends React.Component {
             { header: "Actions", rowEditor: true, headerStyle: { width: '10%', minWidth: '8rem' }, bodyStyle: { textAlign: 'center' } }
         ];
         return (
-            <div>
-                <DataGrid
-                    columns={columns}
-                    value={this.props.districts.data}
-                    stripedRows={true}
-                    size="small"
-                    responsiveLayout="scroll"
-                    paginator={true}
-                    showGridlines={true}
-                    rows={10}
-                    dataKey="id"
-                    loading={this.state.loading}
-                    header={header}
-                    emptyMessage="No records found."
-                    editMode="row"
-                    onRowEditComplete={(e) => this.onRowEditComplete(e)}
-                    removableSort={true}
-                    onSort={this.onSort}
-                    sortField={this.state.sortField}
-                    sortOrder={this.state.sortOrder}
-                />
-            </div>
+            <>
+                {this.state.loaderShow ?
+                    <div className='bg-transparent w-100 d-flex justify-content-center align-items-center' style={{ height: '93.5%' }}>
+                        <img src={loader} width='20%' />
+                    </div> :
+                    <div>
+                        <DataGrid
+                            columns={columns}
+                            value={this.props.districts.data}
+                            stripedRows={true}
+                            size="small"
+                            responsiveLayout="scroll"
+                            paginator={true}
+                            showGridlines={true}
+                            rows={10}
+                            dataKey="id"
+                            loading={this.state.loading}
+                            header={header}
+                            emptyMessage="No records found."
+                            editMode="row"
+                            onRowEditComplete={(e) => this.onRowEditComplete(e)}
+                            removableSort={true}
+                            onSort={this.onSort}
+                            sortField={this.state.sortField}
+                            sortOrder={this.state.sortOrder}
+                        />
+                    </div>
+                }
+            </>
         )
     }
 }

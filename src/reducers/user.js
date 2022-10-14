@@ -1,5 +1,5 @@
 import baseState from '../store/baseState';
-import { GET_USER, GET_USER_KYC_STATUS, UPDATE_USER, GET_ALL_KYC_REQUESTS } from '../actions/action';
+import { GET_USER, UPDATE_USER, UPDATE_USER_ACC_STATUS } from '../actions/action';
 export default (state = baseState.userDetails, { payload, type, error }) => {
     switch (type) {
         case GET_USER.REQUEST:
@@ -32,34 +32,19 @@ export default (state = baseState.userDetails, { payload, type, error }) => {
                 user: [],
                 error: error.message
             }
-        case GET_USER_KYC_STATUS.REQUEST:
+        case UPDATE_USER_ACC_STATUS.REQUEST:
             return {
                 ...state
             };
-        case GET_USER_KYC_STATUS.SUCCESS:
+        case UPDATE_USER_ACC_STATUS.SUCCESS:
             return {
                 ...state,
-                userKyc: payload.data
+                userAccStatus: payload.data
             };
-        case GET_USER_KYC_STATUS.FAILURE:
+        case UPDATE_USER_ACC_STATUS.FAILURE:
             return {
                 ...state,
-                userKyc: {},
-                error: error.message
-            };
-        case GET_ALL_KYC_REQUESTS.REQUEST:
-            return {
-                ...state
-            };
-        case GET_ALL_KYC_REQUESTS.SUCCESS:
-            return {
-                ...state,
-                allKycRequests: payload.data
-            };
-        case GET_ALL_KYC_REQUESTS.FAILURE:
-            return {
-                ...state,
-                allKycRequests: [],
+                userAccStatus: "",
                 error: error.message
             };
         default:

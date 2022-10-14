@@ -18,3 +18,16 @@
     font-weight: 700;
     pointer-events: none;
 }
+
+.p-button.p-button-sm {
+    font-size: 0.875rem !important;
+    padding: 0.4rem 0.45rem !important;
+  }
+
+  #header-div {
+    margin-top: -4px;
+    padding: 7px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }

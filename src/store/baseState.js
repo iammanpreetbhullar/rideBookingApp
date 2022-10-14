@@ -1,7 +1,7 @@
 export default {
   authData: {
     loginDetails: {},
-    driverDetails:{},
+    driverDetails: {},
     authenticated: false,
     error: ''
   },
@@ -38,6 +38,7 @@ export default {
   },
   userDetails: {
     user: {},
+    userAccStatus: "",
     error: ''
   },
   getLedger: {
@@ -52,18 +53,23 @@ export default {
   },
   vehicle: {
     vehicleDetails: {},
+    plansDetails:[],
+    updatedPlanDetails:{},
     error: ''
   },
   rideDetails: {
     recentRides: [],
     pastRides: [],
     acceptedRide: {},
+    startedRide: {},
+    completedRide: {},
     canceledRide: {},
     error: ''
   },
-  kycDetails:{
+  kycDetails: {
     userKycRequest: {},
     allKycRequests: [],
+    updatedKyc:'',
     error: ''
   }
 }
